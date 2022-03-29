@@ -71,7 +71,7 @@ void printSequence(); // function to print the current safe sequence
 
 void runCustomers(); // function to call the customers in the right order
 
-void* threadRun(void *t); //the thread function, the code executed by each thread
+void* threadRun(int *nums); //the thread function, the code executed by each thread
 
 // ------------- Code -------------
 
@@ -286,9 +286,28 @@ int runBankersAlgo() {
 
 void runCustomers() {
 
+	pthread_t t_id;
+	int *curr_customer = malloc(sizeof(int));
+
+	for (int i = 0; i < customer_count; i++) {
+
+		*curr_customer = customer_order[i];
+		printf("Before Thread\n");
+		pthread_create(&t_id, NULL, (void*) &threadRun, curr_customer);
+		pthread_join(t_id, NULL);
+		printf("After Thread\n");
+	}
+
 }
 
-void* threadRun(void *t) {
+void* threadRun(int *num) {
+	int *curr_customer = (int*) num;
+
+	printf("Curr Customer id: %d\n", *curr_customer);
+
+	pthread_exit(0);
+
+	return NULL;
 }
 
 //  ------------------------------------- HELPER FUNCTIONS -------------------------------------
