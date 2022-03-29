@@ -24,7 +24,31 @@ struct Customer {
 	bool finished;
 };
 
-// Function prototypes
+// ------------- Global Variables -------------
+
+struct Customer *customer_resources;
+
+bool running = true;
+
+const int BUFF_SIZE = 100;
+const int MAX_STRING_ARRAY_SIZE = 10;
+
+const int EXIT = 0;
+const int CONTINUE_RUNNING = 1;
+const int INVALID_COMMAND = 2;
+const int SAFE_STATE = 3;
+const int UNSAFE_STATE = 4;
+
+int customer_count;
+int resource_count;
+int *availble_resources;
+int *customer_order;
+
+int customer_max_resources[5][4] = { { 6, 4, 7, 3 }, { 4, 2, 3, 2 }, { 2, 5, 3,
+		3 }, { 6, 3, 3, 2 }, { 5, 5, 7, 5 } };
+
+// ------------- Function prototypes -------------
+
 void run();
 
 void printMaxReasources(int option);
@@ -35,26 +59,12 @@ int checkCommand(char *cmd);
 
 char* cleanString(char *cmd);
 
-void checkSafeState(char **str_array, int array_length);
+void checkSafeState(char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE],
+		int array_length);
 
-// Global Variables
-struct Customer *customer_resources;
+int runBankersAlgo();
 
-bool running = true;
-
-const int BUFF_SIZE = 100;
-const int MAX_STRING_ARRAY_SIZE = 10;
-
-const int INVALID_COMMAND = 2;
-const int CONTINUE_RUNNING = 1;
-const int EXIT = 0;
-
-int customer_count;
-int resource_count;
-int *availble_resources;
-
-int customer_max_resources[5][4] = { { 6, 4, 7, 3 }, { 4, 2, 3, 2 }, { 2, 5, 3,
-		3 }, { 6, 3, 3, 2 }, { 5, 5, 7, 5 } };
+// ------------- Code -------------
 
 int main(int argc, char *argv[]) {
 
@@ -70,14 +80,17 @@ int main(int argc, char *argv[]) {
 
 		temp_customer.max_resources = (int*) malloc(
 				sizeof(int) * resource_count);
-		temp_customer.max_resources = customer_max_resources[i];
-
+		temp_customer.needed_resources = (int*) malloc(
+				sizeof(int) * resource_count);
 		temp_customer.allocated_resources = malloc(
 				sizeof(int) * resource_count);
 
-		temp_customer.needed_resources = (int*) malloc(
-				sizeof(int) * resource_count);
-		temp_customer.needed_resources = customer_max_resources[i];
+		for (int col = 0; col < resource_count; col++) {
+			temp_customer.max_resources[col] = customer_max_resources[i][col];
+			temp_customer.needed_resources[col] =
+					customer_max_resources[i][col];
+			temp_customer.allocated_resources[col] = 0;
+		}
 
 		temp_customer.finished = false;
 		temp_customer.id = i;
@@ -90,6 +103,7 @@ int main(int argc, char *argv[]) {
 	printf("Currently Available resources: ");
 
 	availble_resources = (int*) malloc(sizeof(int) * resource_count);
+	customer_order = (int*) malloc(sizeof(int) * resource_count);
 
 	for (int i = 1; i < argc; i++) {
 		printf("%s ", argv[i]);
@@ -117,8 +131,60 @@ void run() {
 	}
 }
 
-void checkSafeState(char **str_array, int array_length) {
+void checkSafeState(char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE],
+		int array_length) {
 
+	for (int i = 0; i < array_length; i++) {
+		printf("WORD: %s\n", str_array[i]);
+	}
+
+	int customer_number = atoi(str_array[1]);
+	int *cus_initial_res_alloc = (int*) malloc(sizeof(int) * resource_count);
+	int *cus_initial_res_needed = (int*) malloc(sizeof(int) * resource_count);
+
+	struct Customer curr_customer = customer_resources[customer_number];
+
+	// hold onto original amounts incase they need to be restated
+	for (int i = 0; i < resource_count; i++) {
+		cus_initial_res_alloc[i] = curr_customer.allocated_resources[i];
+		cus_initial_res_needed[i] = curr_customer.needed_resources[i];
+	}
+
+	printf("Customer number: %d Customer ID: %d\n", customer_number,
+			customer_resources[customer_number].id);
+
+	if (strcmp(str_array[0], "RQ") == 0) {
+		printf("Request Command\n");
+		for (int i = 0; i < resource_count; i++) {
+			curr_customer.allocated_resources[i] = atoi(str_array[i + 2]);
+			curr_customer.needed_resources[i] = curr_customer.max_resources[i]
+					- curr_customer.allocated_resources[i];
+		}
+
+	} else if (strcmp(str_array[0], "RL") == 0) {
+		printf("Release Command\n");
+		for (int i = 0; i < resource_count; i++) {
+			curr_customer.allocated_resources[i] -= atoi(str_array[i + 2]);
+			if (curr_customer.allocated_resources[i] < 0) {
+				curr_customer.allocated_resources[i] = 0;
+			}
+			curr_customer.needed_resources[i] = curr_customer.max_resources[i]
+					- curr_customer.allocated_resources[i];
+		}
+	}
+
+	int state = runBankersAlgo();
+
+	if (state == UNSAFE_STATE) {
+		printf("State is unsafe, and request is not satisfied\n");
+	} else {
+		printf("State is safe, and request is satisfied\n");
+	}
+}
+
+int runBankersAlgo() {
+
+	return SAFE_STATE;
 }
 
 //  ------------------------------------- HELPER FUNCTIONS -------------------------------------
@@ -126,10 +192,11 @@ void checkSafeState(char **str_array, int array_length) {
 int checkCommand(char *cmd) {
 
 	char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE];
+//	str_array = (char**) malloc(sizeof(char*) * MAX_STRING_ARRAY_SIZE);
 	char *cleanCmd;
 	cleanCmd = cleanString(cmd);
 
-	printf("Command: |%s|\n", cleanCmd);
+//	printf("Command: |%s|\n", cleanCmd);
 
 	if (strcmp(cleanCmd, "Status") == 0) {
 		printstatus();
@@ -137,21 +204,31 @@ int checkCommand(char *cmd) {
 	} else if (strcmp(cleanCmd, "Exit") == 0) {
 		printf(":::: Ending Program...\n");
 		return EXIT;
+	} else if (strcmp(cleanCmd, "Run") == 0) {
+		printf(":::: Running threads...\n");
+		return EXIT;
 	} else {
 		char *pch;
 		pch = strtok(cleanCmd, " ");
 		int array_size = 0;
 		while (pch != NULL) {
-			printf("%s\n", pch);
+//			printf("%s\n", pch);
 			strcpy(str_array[array_size], pch);
 			pch = strtok(NULL, " ,.-");
 			array_size++;
 		}
 
-		if (strcmp(str_array[0], "RQ") == 0) {
+		if (array_size != 6) {
+			return INVALID_COMMAND;
+
+		} else if (strcmp(str_array[0], "RQ") == 0) {
 			printf("Request Command\n");
+			checkSafeState(str_array, array_size);
+
 		} else if (strcmp(str_array[0], "RL") == 0) {
 			printf("Release Command\n");
+			checkSafeState(str_array, array_size);
+
 		} else {
 			printf("Invalid Command\n");
 			return INVALID_COMMAND;
