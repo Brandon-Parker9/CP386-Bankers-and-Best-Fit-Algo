@@ -161,7 +161,7 @@ void checkSafeState(char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE],
 	}
 
 	if (strcmp(str_array[0], "RQ") == 0) {
-		printf("Request Command\n");
+//		printf("Request Command\n");
 		for (int i = 0; i < resource_count; i++) {
 
 			availble_resources[i] += curr_customer.allocated_resources[i];
@@ -174,7 +174,7 @@ void checkSafeState(char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE],
 		}
 
 	} else if (strcmp(str_array[0], "RL") == 0) {
-		printf("Release Command\n");
+//		printf("Release Command\n");
 		for (int i = 0; i < resource_count; i++) {
 
 			if (atoi(str_array[i + 2]) > curr_customer.allocated_resources[i]) {
@@ -207,15 +207,10 @@ void checkSafeState(char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE],
 				availble_resources[i] = initial_avail_resources[i];
 			}
 
-			printSequence();
-
 		} else {
 
-			printf(
-					"State is safe, and request is satisfied customer count: %d\n",
-					customer_count);
+			printf("State is safe, and request is satisfied\n");
 
-			printSequence();
 		}
 	}
 }
@@ -286,24 +281,68 @@ int runBankersAlgo() {
 
 void runCustomers() {
 
+	printSequence();
+
 	pthread_t t_id;
-	int *curr_customer = malloc(sizeof(int));
+	int *curr_customer_num = malloc(sizeof(int));
 
 	for (int i = 0; i < customer_count; i++) {
 
-		*curr_customer = customer_order[i];
-		printf("Before Thread\n");
-		pthread_create(&t_id, NULL, (void*) &threadRun, curr_customer);
+		*curr_customer_num = customer_order[i];
+
+		struct Customer curr_customer = customer_resources[*curr_customer_num];
+
+		printf("--> Customer/Thread %d\n", *curr_customer_num);
+
+		printf("    Allocated resources:");
+		for (int i = 0; i < resource_count; i++) {
+			printf(" %d", curr_customer.allocated_resources[i]);
+		}
+		printf("\n");
+
+		printf("    Needed:");
+		for (int i = 0; i < resource_count; i++) {
+			printf(" %d", curr_customer.needed_resources[i]);
+		}
+		printf("\n");
+
+		printf("    Available:");
+		for (int i = 0; i < resource_count; i++) {
+			printf(" %d", availble_resources[i]);
+		}
+		printf("\n");
+
+		pthread_create(&t_id, NULL, (void*) &threadRun, curr_customer_num);
 		pthread_join(t_id, NULL);
-		printf("After Thread\n");
+
+		printf("    Thread is releasing resources\n");
+
+		for (int i = 0; i < resource_count; i++) {
+			availble_resources[i] += curr_customer.allocated_resources[i];
+
+			curr_customer.needed_resources[i] +=
+					curr_customer.allocated_resources[i];
+
+			curr_customer.allocated_resources[i] = 0;
+		}
+
+		printf("    New Available:");
+		for (int i = 0; i < resource_count; i++) {
+			printf(" %d", availble_resources[i]);
+		}
+		printf("\n");
 	}
 
 }
 
 void* threadRun(int *num) {
-	int *curr_customer = (int*) num;
 
-	printf("Curr Customer id: %d\n", *curr_customer);
+//	int *curr_customer = (int*) num;
+
+//	printf("Curr Customer id: %d\n", *curr_customer);
+
+	printf("    Thread has started\n");
+	printf("    Thread has finished\n");
 
 	pthread_exit(0);
 
@@ -335,7 +374,7 @@ int checkCommand(char *cmd) {
 	} else if (strcmp(cleanCmd, "Run") == 0) {
 		printf(":::: Running threads...\n");
 		runCustomers();
-		return EXIT;
+		return CONTINUE_RUNNING;
 	} else {
 		char *pch;
 		pch = strtok(cleanCmd, " ");
@@ -363,11 +402,11 @@ int checkCommand(char *cmd) {
 			}
 
 			if (strcmp(str_array[0], "RQ") == 0) {
-				printf("Request Command\n");
+//				printf("Request Command\n");
 				checkSafeState(str_array, array_size);
 
 			} else if (strcmp(str_array[0], "RL") == 0) {
-				printf("Release Command\n");
+//				printf("Release Command\n");
 				checkSafeState(str_array, array_size);
 
 			} else {
