@@ -85,6 +85,7 @@ int main(int argc, char *argv[]) {
 	customer_resources = malloc(sizeof(struct Customer) * customer_count);
 	customer_order = (int*) malloc(sizeof(int) * customer_count);
 
+	// setup the initial customers based the users/file inputs
 	for (int i = 0; i < customer_count; i++) {
 		struct Customer temp_customer;
 
@@ -116,6 +117,7 @@ int main(int argc, char *argv[]) {
 
 	availble_resources = (int*) malloc(sizeof(int) * resource_count);
 
+	// print the available resources
 	for (int i = 1; i < argc; i++) {
 		printf("%s ", argv[i]);
 		availble_resources[i - 1] = atoi(argv[i]);
@@ -123,9 +125,21 @@ int main(int argc, char *argv[]) {
 	printf("\n");
 	printMaxReasources(0);
 
+	// start getting user input
 	run();
 }
 
+/*
+ * Description:
+ *
+ *		Called after initial setup to run while loop
+ *		asking the user for in put
+ *
+ * Return:
+ *
+ * 		void
+ *
+ */
 void run() {
 	while (running) {
 		printf("Enter Command: ");
@@ -143,6 +157,23 @@ void run() {
 	}
 }
 
+/*
+ * Description:
+ *
+ *		Store the original values and set the new ones temporarily until
+ *		after calling bankers algorithm and determining if a safe state
+ *		is possible. If not possible, values are then reverted and the
+ *		users is informed.
+ *
+ * Parameters:
+ * 		char str_array[][] -> stores the most recent user command split
+ * 		into and array
+ *
+ * Return:
+ *
+ * 		void
+ *
+ */
 void checkSafeState(char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE],
 		int array_length) {
 
@@ -160,8 +191,10 @@ void checkSafeState(char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE],
 		initial_avail_resources[i] = availble_resources[i];
 	}
 
+	// change values based on a request command
 	if (strcmp(str_array[0], "RQ") == 0) {
-//		printf("Request Command\n");
+
+		// cycle through all resource values and update
 		for (int i = 0; i < resource_count; i++) {
 
 			availble_resources[i] += curr_customer.allocated_resources[i];
@@ -174,7 +207,8 @@ void checkSafeState(char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE],
 		}
 
 	} else if (strcmp(str_array[0], "RL") == 0) {
-//		printf("Release Command\n");
+
+		// cycle through all resource values and update
 		for (int i = 0; i < resource_count; i++) {
 
 			if (atoi(str_array[i + 2]) > curr_customer.allocated_resources[i]) {
@@ -194,9 +228,12 @@ void checkSafeState(char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE],
 		}
 	}
 
+	// only run bankers algorithm when requesting resources
 	if (strcmp(str_array[0], "RQ") == 0) {
+
 		int state = runBankersAlgo();
 
+		// if state is unsafe, return all values back to what they were
 		if (state == UNSAFE_STATE) {
 
 			printf("State is unsafe, and request is not satisfied\n");
@@ -207,7 +244,7 @@ void checkSafeState(char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE],
 				availble_resources[i] = initial_avail_resources[i];
 			}
 
-		} else {
+		} else { // let user know the state is safe
 
 			printf("State is safe, and request is satisfied\n");
 
@@ -215,6 +252,18 @@ void checkSafeState(char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE],
 	}
 }
 
+/*
+ * Description:
+ *
+ *		Runs bankers algorithm to determine if a safe state
+ *		is plausible or not
+ *
+ * Return:
+ *
+ * 		integer -> whether or not a safe state is possible.
+ * 					SAFE_STATE = 3 or UNSAFE_STATE = 4
+ *
+ */
 int runBankersAlgo() {
 
 	int allocated_count = 0;
@@ -268,6 +317,7 @@ int runBankersAlgo() {
 		}
 	}
 
+	// after running algorithm determine safe or unsafe
 	if (allocated_count == customer_count) {
 		for (int i = 0; i < customer_count; i++) {
 			customer_order[i] = calculate_customer_order[i];
@@ -279,6 +329,17 @@ int runBankersAlgo() {
 
 }
 
+/*
+ * Description:
+ *
+ *		Called when user enters the run command and starts
+ *		the customers in a new thread in the safe state order
+ *
+ * Return:
+ *
+ * 		void
+ *
+ */
 void runCustomers() {
 
 	printSequence();
@@ -312,11 +373,13 @@ void runCustomers() {
 		}
 		printf("\n");
 
+		// start and wait for threads to complete
 		pthread_create(&t_id, NULL, (void*) &threadRun, curr_customer_num);
 		pthread_join(t_id, NULL);
 
 		printf("    Thread is releasing resources\n");
 
+		// update all resource values
 		for (int i = 0; i < resource_count; i++) {
 			availble_resources[i] += curr_customer.allocated_resources[i];
 
@@ -335,11 +398,20 @@ void runCustomers() {
 
 }
 
+/*
+ * Description:
+ *
+ *		function called when creating a thread
+ *
+ * Parameters:
+ * 		int* num -> customer id
+ *
+ * Return:
+ *
+ * 		void*
+ *
+ */
 void* threadRun(int *num) {
-
-//	int *curr_customer = (int*) num;
-
-//	printf("Curr Customer id: %d\n", *curr_customer);
 
 	printf("    Thread has started\n");
 	printf("    Thread has finished\n");
@@ -351,14 +423,40 @@ void* threadRun(int *num) {
 
 //  ------------------------------------- HELPER FUNCTIONS -------------------------------------
 
+/*
+ * Description:
+ *
+ *		Prints the current safe sequence
+ *
+ * Return:
+ *
+ * 		void
+ *
+ */
 void printSequence() {
+
 	printf("Safe Sequence is: ");
+
 	for (int i = 0; i < customer_count; i++) {
 		printf("%d ", customer_order[i]);
 	}
 	printf("\n");
 }
 
+/*
+ * Description:
+ *
+ *		Determines what to do based on the users command
+ *
+ * Parameters:
+ * 		char *cmd -> the users input
+ *
+ * Return:
+ *
+ * 		int -> CONTINUE_RUNNING = 1, INVALID_COMMAND = 2, or EXIT = 0
+ * 				depending on what the user inputs
+ *
+ */
 int checkCommand(char *cmd) {
 
 	char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE];
@@ -366,16 +464,23 @@ int checkCommand(char *cmd) {
 	cleanCmd = cleanString(cmd);
 
 	if (strcmp(cleanCmd, "Status") == 0) {
+
 		printstatus();
 		return CONTINUE_RUNNING;
+
 	} else if (strcmp(cleanCmd, "Exit") == 0) {
+
 		printf(":::: Ending Program...\n");
 		return EXIT;
+
 	} else if (strcmp(cleanCmd, "Run") == 0) {
+
 		printf(":::: Running threads...\n");
 		runCustomers();
 		return CONTINUE_RUNNING;
+
 	} else {
+
 		char *pch;
 		pch = strtok(cleanCmd, " ");
 		int array_size = 0;
@@ -387,14 +492,18 @@ int checkCommand(char *cmd) {
 		}
 
 		if (array_size != 6) {
+
 			return INVALID_COMMAND;
 
 		} else if (strcmp(str_array[0], "RQ") != 0
 				&& strcmp(str_array[0], "RL") != 0) {
+
 			return INVALID_COMMAND;
+
 		} else {
 
 			for (int i = 0; i < customer_count; i++) {
+
 				if (availble_resources[i] < atoi(str_array[i + 2])) {
 					printf(":::: Requested to many resources!\n");
 					return INVALID_COMMAND;
@@ -402,11 +511,11 @@ int checkCommand(char *cmd) {
 			}
 
 			if (strcmp(str_array[0], "RQ") == 0) {
-//				printf("Request Command\n");
+
 				checkSafeState(str_array, array_size);
 
 			} else if (strcmp(str_array[0], "RL") == 0) {
-//				printf("Release Command\n");
+
 				checkSafeState(str_array, array_size);
 
 			} else {
@@ -419,6 +528,20 @@ int checkCommand(char *cmd) {
 
 }
 
+/*
+ * Description:
+ *
+ *		cleans and removes any newline or carriage returns
+ *		from the passed sting
+ *
+ * Parameters:
+ * 		char *cmd -> the users input
+ *
+ * Return:
+ *
+ * 		char* -> a cleaned version of the passed command
+ *
+ */
 char* cleanString(char *cmd) {
 
 	char *cleanCmd = (char*) malloc(sizeof(char) * BUFF_SIZE);
@@ -436,6 +559,21 @@ char* cleanString(char *cmd) {
 
 }
 
+/*
+ * Description:
+ *
+ *		prints out the current maximum resources
+ *
+ * Parameters:
+ * 		int options -> changes the initial message printed
+ *
+ * 		options = 0 -> "Maximum resources from file:\n"
+ *		options != -> "Maximum resources:\n"
+ * Return:
+ *
+ * 		void
+ *
+ */
 void printMaxReasources(int options) {
 
 	if (options == 0) {
@@ -452,6 +590,18 @@ void printMaxReasources(int options) {
 	}
 }
 
+/*
+ * Description:
+ *
+ *		called when the user asks for the status, displays
+ *		information about Available, Allocated, Max and
+ *		Needed resources
+ *
+ * Return:
+ *
+ * 		void
+ *
+ */
 void printstatus() {
 
 	printf("Available resources:\n");
