@@ -5,6 +5,7 @@
  *
  */
 
+#include <ctype.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdbool.h>
@@ -14,7 +15,6 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
-#include <ctype.h>
 
 // ------------- Objects -------------
 
@@ -127,6 +127,8 @@ int main(int argc, char *argv[]) {
 
 	// start getting user input
 	run();
+
+	return 0;
 }
 
 /*
@@ -168,6 +170,8 @@ void run() {
  * Parameters:
  * 		char str_array[][] -> stores the most recent user command split
  * 		into and array
+ *
+ * 		int array_length -> the number of strings in the array
  *
  * Return:
  *
