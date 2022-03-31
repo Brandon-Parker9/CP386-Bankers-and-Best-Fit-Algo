@@ -66,13 +66,16 @@ int checkrquestFormat(char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE],
 int checkValidRquest(char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE],
 		int array_length); // checks if the request for space by the user is possible
 
+int checkValidRelease(char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE],
+		int array_length); // checks if the release is valid
+
 void printstatus(); // prints current status
 
 void removeFromList(struct Frame *node, struct Frame **start_node,
-		struct Frame **end_node);
+		struct Frame **end_node); // properly remove node from list
 
 void addTooList(struct Frame *node, struct Frame **start_node,
-		struct Frame **end_node);
+		struct Frame **end_node); // properly add node from list
 
 // ------------- Code -------------
 
@@ -114,6 +117,10 @@ int main(int argc, char *argv[]) {
 }
 
 /*
+ * Author:
+ *
+ * 		Brandon Parker
+ *
  * Description:
  *
  * Called after initial setup to run while loop
@@ -142,9 +149,13 @@ void run() {
 }
 
 /*
+ * Author:
+ *
+ * 		Brandon Parker
+ *
  * Description:
  *
- *		Checks whether the rq by the user is possible or not
+ *		Checks whether the RL by the user is possible or not
  *
  * Parameters:
  *
@@ -158,14 +169,151 @@ void run() {
  * 		int -> INVALID_REQUEST = 1 or VALID_REQUEST = 4
  *
  */
+int checkValidRelease(char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE],
+		int array_length) {
 
+	struct Frame *curr_frame = allocated_starting_frame;
+	struct Frame *found_frame = NULL;
+
+	bool found = false;
+
+	// see if process exist
+	while (curr_frame != NULL && !found) {
+		if (strcmp(curr_frame->p_id, str_array[1]) == 0) {
+			found = true;
+			found_frame = curr_frame;
+		}
+		curr_frame = curr_frame->next;
+	}
+
+	if (!found) {
+		return INVALID_REQUEST;
+	}
+
+	bool both_found = false;
+	bool after_found = false;
+	bool before_found = false;
+	struct Frame *before_hole_frame = NULL;
+	struct Frame *after_hole_frame = NULL;
+	struct Frame *prev_hole_frame = NULL;
+
+	curr_frame = hole_starting_frame;
+
+	// search for holes that connect to the allocated block-
+	while (curr_frame != NULL && !both_found) {
+		if ((curr_frame->mem_end + 1) == found_frame->mem_start) {
+
+			before_hole_frame = curr_frame;
+			before_found = true;
+		} else if ((curr_frame->mem_start - 1) == found_frame->mem_end) {
+
+			after_hole_frame = curr_frame;
+			after_found = true;
+		}
+
+//		printf(":::: curr_end: %d found_start: %d\n", curr_frame->mem_end,
+//				found_frame->mem_start);
+
+		if (curr_frame->mem_end < found_frame->mem_start) {
+			prev_hole_frame = curr_frame;
+		}
+
+		if ((after_hole_frame != NULL) & (before_hole_frame != NULL)) {
+			both_found = true;
+		}
+
+		curr_frame = curr_frame->next;
+	}
+
+	if (both_found) { // surrounded by two empty holes
+		struct Frame *frame;
+		frame = (struct Frame*) malloc(sizeof(struct Frame*));
+		strcpy(frame->p_id, EMPTY_SPACE);
+		frame->mem_start = before_hole_frame->mem_start;
+		frame->mem_end = after_hole_frame->mem_end;
+		frame->size = before_hole_frame->size + found_frame->size
+				+ after_hole_frame->size;
+		frame->prev = before_hole_frame->prev;
+		frame->next = after_hole_frame->next;
+
+		if (before_hole_frame->prev == NULL) {
+			hole_starting_frame = frame;
+		} else if (after_hole_frame->next == NULL) {
+			hole_ending_frame = frame;
+		}
+
+	} else if (after_found) { // one empty hole after
+
+		after_hole_frame->mem_start = found_frame->mem_start;
+		after_hole_frame->size += found_frame->size;
+
+	} else if (before_found) { // one empty hole before
+
+		before_hole_frame->mem_end = found_frame->mem_end;
+		before_hole_frame->size += found_frame->size;
+
+	} else { //no empty frames directly connected
+
+		struct Frame *frame;
+		frame = (struct Frame*) malloc(sizeof(struct Frame*));
+		strcpy(frame->p_id, EMPTY_SPACE);
+		frame->mem_start = found_frame->mem_start;
+		frame->mem_end = found_frame->mem_end;
+		frame->size = found_frame->size;
+		frame->prev = NULL;
+		frame->next = NULL;
+
+		if (prev_hole_frame == NULL) { // insert at the start
+//			printf(":::: prev is NULL!! \n");
+			frame->next = hole_starting_frame;
+			hole_starting_frame->prev = frame;
+			hole_starting_frame = frame;
+		} else if (prev_hole_frame->next == NULL) { // insert at the end
+			frame->prev = hole_ending_frame;
+			hole_ending_frame->next = frame;
+			hole_ending_frame = frame;
+		} else { // insert in the middle
+			frame->prev = prev_hole_frame;
+			frame->next = prev_hole_frame->next;
+			prev_hole_frame->next = frame;
+		}
+	}
+
+	total_allocated_space -= found_frame->size;
+	total_free_space += found_frame->size;
+
+	removeFromList(found_frame, &allocated_starting_frame,
+			&allocated_ending_frame);
+
+	return VALID_REQUEST;
+
+}
+
+/*
+ * Author:
+ *
+ * 		Brandon Parker
+ *
+ * Description:
+ *
+ *		Checks whether the RQ by the user is possible or not
+ *
+ * Parameters:
+ *
+ * 		char str_array[][] -> stores the most recent user command split
+ * 		into and array
+ *
+ * 		int array_length -> the number of strings in the array
+ *
+ * Return:
+ *
+ * 		int -> INVALID_REQUEST = 1 or VALID_REQUEST = 4
+ *
+ */
 int checkValidRquest(char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE],
 		int array_length) {
 
 	int space_needed = atoi(str_array[2]);
-
-	char *process_id = malloc(sizeof(char) * BUFF_SIZE);
-	strcpy(process_id, str_array[1]);
 
 	bool found = false;
 
@@ -190,7 +338,7 @@ int checkValidRquest(char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE],
 		return INVALID_REQUEST;
 	}
 
-	//create new allocate frame to be added to allocate frame linked list
+//create new allocate frame to be added to allocate frame linked list
 	struct Frame *frame;
 	frame = (struct Frame*) malloc(sizeof(struct Frame*));
 	strcpy(frame->p_id, str_array[1]);
@@ -200,14 +348,14 @@ int checkValidRquest(char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE],
 	frame->prev = NULL;
 	frame->next = NULL;
 
-	// add new frame allocated from to linked list
+// add new frame allocated from to linked list
 	addTooList(frame, &allocated_starting_frame, &allocated_ending_frame);
 
-	//update old hole to reflect the space taken
-	possible_frame->mem_start = space_needed;
+//update old hole to reflect the space taken
+	possible_frame->mem_start += space_needed;
 	possible_frame->size -= space_needed;
 
-	// if all the memory is used remove from list
+// if all the memory is used remove from list
 	if (possible_frame->size == 0) {
 		removeFromList(possible_frame, &hole_starting_frame,
 				&hole_ending_frame);
@@ -221,6 +369,10 @@ int checkValidRquest(char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE],
 
 //  ------------------------------------- HELPER FUNCTIONS -------------------------------------
 /*
+ * Author:
+ *
+ * 		Brandon Parker
+ *
  * Description:
  *
  *		Removes node from the linked list correctly
@@ -247,12 +399,19 @@ void removeFromList(struct Frame *node, struct Frame **start_node,
 //		printf(":: 3\n");
 		*start_node = node->next;
 		(*start_node)->prev = NULL;
+	} else {
+		node->prev->next = node->next;
+		node->next->prev = node->prev;
 	}
 	node = NULL;
 	free(node);
 }
 
 /*
+ * Author:
+ *
+ * 		Brandon Parker
+ *
  * Description:
  *
  *		Add node to the linked list in the correct position
@@ -276,6 +435,10 @@ void addTooList(struct Frame *node, struct Frame **start_node,
 }
 
 /*
+ * Author:
+ *
+ * 		Brandon Parker
+ *
  * Description:
  *
  *		Determines what to do based on the users command
@@ -344,7 +507,7 @@ int checkCommand(char *cmd) {
 
 						if (state == VALID_REQUEST) {
 							printf("Successfully allocated %s to process %s\n",
-									str_array[2], str_array[0]);
+									str_array[2], str_array[1]);
 						} else {
 							printf("No hole of sufficient size\n");
 						}
@@ -353,6 +516,17 @@ int checkCommand(char *cmd) {
 			} else if (strcmp(str_array[0], "RL") == 0) {
 
 				printf("Release command\n");
+
+				int state = checkValidRelease(str_array, array_size);
+
+				if (state == VALID_REQUEST) {
+					printf("Successfully released memory for process %s\n",
+							str_array[1]);
+				} else {
+					printf("Process %s not found, please try again!\n",
+							str_array[1]);
+				}
+
 			}
 
 		}
@@ -363,6 +537,10 @@ int checkCommand(char *cmd) {
 }
 
 /*
+ * Author:
+ *
+ * 		Brandon Parker
+ *
  * Description:
  *
  *		cleans and removes any newline or carriage returns
@@ -394,6 +572,10 @@ char* cleanString(char *cmd) {
 }
 
 /*
+ * Author:
+ *
+ * 		Brandon Parker
+ *
  * Description:
  *
  *		Checks whether the format of the RQ command is in the proper
@@ -431,6 +613,10 @@ int checkrquestFormat(char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE],
 }
 
 /*
+ * Author:
+ *
+ * 		Brandon Parker
+ *
  * Description:
  *
  *		called when the user asks for the status, displays

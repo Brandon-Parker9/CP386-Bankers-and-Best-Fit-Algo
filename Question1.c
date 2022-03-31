@@ -132,6 +132,10 @@ int main(int argc, char *argv[]) {
 }
 
 /*
+ * Author:
+ *
+ * 		Brandon Parker
+ *
  * Description:
  *
  *		Called after initial setup to run while loop
@@ -160,6 +164,10 @@ void run() {
 }
 
 /*
+ * Author:
+ *
+ * 		Brandon Parker
+ *
  * Description:
  *
  *		Store the original values and set the new ones temporarily until
@@ -257,6 +265,10 @@ void checkSafeState(char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE],
 }
 
 /*
+ * Author:
+ *
+ * 		Brandon Parker
+ *
  * Description:
  *
  *		Runs bankers algorithm to determine if a safe state
@@ -334,6 +346,10 @@ int runBankersAlgo() {
 }
 
 /*
+ * Author:
+ *
+ * 		Brandon Parker
+ *
  * Description:
  *
  *		Called when user enters the run command and starts
@@ -403,6 +419,10 @@ void runCustomers() {
 }
 
 /*
+ * Author:
+ *
+ * 		Brandon Parker
+ *
  * Description:
  *
  *		function called when creating a thread
@@ -428,6 +448,10 @@ void* threadRun(int *num) {
 //  ------------------------------------- HELPER FUNCTIONS -------------------------------------
 
 /*
+ * Author:
+ *
+ * 		Brandon Parker
+ *
  * Description:
  *
  *		Prints the current safe sequence
@@ -448,6 +472,10 @@ void printSequence() {
 }
 
 /*
+ * Author:
+ *
+ * 		Brandon Parker
+ *
  * Description:
  *
  *		Determines what to do based on the users command
@@ -533,6 +561,10 @@ int checkCommand(char *cmd) {
 }
 
 /*
+ * Author:
+ *
+ * 		Brandon Parker
+ *
  * Description:
  *
  *		cleans and removes any newline or carriage returns
@@ -564,6 +596,10 @@ char* cleanString(char *cmd) {
 }
 
 /*
+ * Author:
+ *
+ * 		Brandon Parker
+ *
  * Description:
  *
  *		prints out the current maximum resources
@@ -595,6 +631,10 @@ void printMaxReasources(int options) {
 }
 
 /*
+ * Author:
+ *
+ * 		Brandon Parker
+ *
  * Description:
  *
  *		called when the user asks for the status, displays
