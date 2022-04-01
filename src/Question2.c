@@ -515,8 +515,6 @@ int checkCommand(char *cmd) {
 				}
 			} else if (strcmp(str_array[0], "RL") == 0) {
 
-				printf("Release command\n");
-
 				int state = checkValidRelease(str_array, array_size);
 
 				if (state == VALID_REQUEST) {
