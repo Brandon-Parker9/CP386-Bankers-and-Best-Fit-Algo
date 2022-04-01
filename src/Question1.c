@@ -233,8 +233,6 @@ void checkSafeState(char str_array[MAX_STRING_ARRAY_SIZE][BUFF_SIZE],
 				availble_resources[i] += atoi(str_array[i + 2]);
 			}
 
-			curr_customer.allocated_resources[i] -= atoi(str_array[i + 2]);
-
 			curr_customer.needed_resources[i] = curr_customer.max_resources[i]
 					- curr_customer.allocated_resources[i];
 		}
