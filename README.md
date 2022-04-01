@@ -3,14 +3,14 @@ Implimentation of Bankers and Best fit algo in C/C++
 
 ## Preview 
 
-Question1.c
-![rq&statusCommand](/pictures/q1_request.jpg)
-![runCommand](/pictures/q1_run.jpg)
-![rlCommand](/pictures/q1_release.jpg)
+Question1.c<br/>
+![rq&statusCommand](/pictures/q1_request.jpg)<br/>
+![runCommand](/pictures/q1_run.jpg)<br/>
+![rlCommand](/pictures/q1_release.jpg)<br/>
 
-Question2.c
-![rq&rlCommand](/pictures/q2_request_release.jpg)
-![statusCommand](/pictures/q2_status.jpg)
+Question2.c<br/>
+![rq&rlCommand](/pictures/q2_request_release.jpg)<br/>
+![statusCommand](/pictures/q2_status.jpg)<br/>
 
 ## Contributors
 - [Brandon Parker](https://github.com/Brandon-Parker9)<br/>
