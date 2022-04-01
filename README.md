@@ -3,6 +3,15 @@ Implimentation of Bankers and Best fit algo in C/C++
 
 ## Preview 
 
+Question1.c
+![rq&statusCommand](/pictures/q1_request.jpg)
+![runCommand](/pictures/q1_run.jpg)
+![rlCommand](/pictures/q1_release.jpg)
+
+Question2.c
+![rq&rlCommand](/pictures/q2_request_release.jpg)
+![statusCommand](/pictures/q2_status.jpg)
+
 ## Contributors
 - [Brandon Parker](https://github.com/Brandon-Parker9)<br/>
 
@@ -34,21 +43,30 @@ void addTooList(struct Frame *node, struct Frame **start_node, struct Frame **en
 ```
 
 ## Tests
-Example: 
+Example Question 1: 
 ```
-    ./main 10 5 7 8
+    ./Question1 10 5 7 8
+    RQ 0 1 0 0 1
+    RQ 1 1 1 1 1
+    RQ 2 2 2 2 2
+    RQ 3 1 1 1 1
+    RQ 4 1 0 0 0
 
-    rq 0 1 0 0 1
-
-    rq 1 1 1 1 1
-
-    rq 2 2 2 2 2
-
-    rq 3 1 1 1 1
-
-    rq 4 1 0 0 0
-
-    run
+    Run
+    
+    Exit
+```
+Example Question 2: 
+```
+    ./Question2 1000000
+    RQ P0 200000 B
+    RQ P1 350000 B
+    RQ P2 300000 B
+    RL P0
+    
+    Status
+    
+    Exit
 ```
 
 ## About The Developers 
